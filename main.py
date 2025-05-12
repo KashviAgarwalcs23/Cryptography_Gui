@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
 import logging
-from lamport import generate_keys
+from lamport import generate_keys, sign_file
 
 # Set up logging
 logging.basicConfig(filename='logs/app.log', level=logging.INFO,
@@ -49,7 +49,7 @@ class LamportApp(tk.Tk):
     def create_sign_tab(self):
         label = ttk.Label(self.sign_tab, text="Sign a File")
         label.pack(pady=10)
-        self.sign_button = ttk.Button(self.sign_tab, text="Sign File", command=self.sign_file)
+        self.sign_button = ttk.Button(self.sign_tab, text="Select and Sign File", command=self.sign_file)
         self.sign_button.pack(pady=10)
 
     def create_verify_tab(self):
@@ -68,8 +68,17 @@ class LamportApp(tk.Tk):
             messagebox.showerror("Error", f"Error generating keys: {str(e)}")
 
     def sign_file(self):
-        logging.info("File signing initiated.")
-        messagebox.showinfo("File Signing", "File signing functionality to be implemented.")
+        try:
+            file_path = filedialog.askopenfilename(title="Select File to Sign")
+            if not file_path:
+                return
+
+            signature_path = sign_file(file_path)
+            messagebox.showinfo("Success", f"File signed successfully!\nSignature saved at: {signature_path}")
+
+        except Exception as e:
+            logging.error("Error signing file: %s", str(e))
+            messagebox.showerror("Error", f"Error signing file: {str(e)}")
 
     def verify_signature(self):
         logging.info("Signature verification initiated.")
