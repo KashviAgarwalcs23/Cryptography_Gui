@@ -42,6 +42,8 @@ def generate_keys():
     except Exception as e:
         logging.error("Error generating keys: %s", str(e))
         raise
+
+
 def sign_file(file_path):
     try:
         logging.info("File signing initiated for %s", file_path)
@@ -77,3 +79,39 @@ def sign_file(file_path):
         logging.error("Error signing file: %s", str(e))
         raise
 
+
+def verify_signature(file_path, signature_path):
+    try:
+        logging.info("Signature verification initiated for %s", file_path)
+        public_key_path = os.path.join(KEY_DIR, "public_key.bin")
+
+        if not os.path.exists(public_key_path):
+            raise FileNotFoundError("Public key not found. Generate keys first.")
+
+        # Read the public key
+        with open(public_key_path, 'rb') as pub_file:
+            public_key = [pub_file.read(32 * 256), pub_file.read(32 * 256)]
+
+        # Read the signature
+        with open(signature_path, 'rb') as sig_file:
+            signature = sig_file.read()
+
+        # Hash the file content
+        with open(file_path, 'rb') as file:
+            file_content = file.read()
+            file_hash = hashlib.sha256(file_content).hexdigest()
+
+        # Verify the signature
+        for i, char in enumerate(file_hash):
+            index = int(char, 16)
+            expected_hash = hashlib.sha256(signature[i * 32:(i + 1) * 32]).digest()
+            if expected_hash != public_key[index // 16][index % 16]:
+                logging.warning("Signature verification failed.")
+                return False
+
+        logging.info("Signature verified successfully.")
+        return True
+
+    except Exception as e:
+        logging.error("Error verifying signature: %s", str(e))
+        raise
