@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
 import logging
-from lamport import generate_keys, sign_file
+import lamport
 
 # Set up logging
 logging.basicConfig(filename='logs/app.log', level=logging.INFO,
@@ -49,7 +49,7 @@ class LamportApp(tk.Tk):
     def create_sign_tab(self):
         label = ttk.Label(self.sign_tab, text="Sign a File")
         label.pack(pady=10)
-        self.sign_button = ttk.Button(self.sign_tab, text="Select and Sign File", command=self.sign_file)
+        self.sign_button = ttk.Button(self.sign_tab, text="Sign File", command=self.sign_file)
         self.sign_button.pack(pady=10)
 
     def create_verify_tab(self):
@@ -60,29 +60,39 @@ class LamportApp(tk.Tk):
 
     def generate_keys(self):
         try:
-            private_key_path, public_key_path = generate_keys()
-            messagebox.showinfo("Success", f"Keys generated successfully!\nPrivate Key: {private_key_path}\nPublic Key: {public_key_path}")
-
+            lamport.generate_keys()
+            messagebox.showinfo("Success", "Keys generated successfully!")
         except Exception as e:
-            logging.error("Error generating keys: %s", str(e))
-            messagebox.showerror("Error", f"Error generating keys: {str(e)}")
+            messagebox.showerror("Error", str(e))
 
     def sign_file(self):
+        file_path = filedialog.askopenfilename(title="Select File to Sign")
+        if not file_path:
+            return
         try:
-            file_path = filedialog.askopenfilename(title="Select File to Sign")
-            if not file_path:
-                return
-
-            signature_path = sign_file(file_path)
-            messagebox.showinfo("Success", f"File signed successfully!\nSignature saved at: {signature_path}")
-
+            signature_path = lamport.sign_file(file_path)
+            messagebox.showinfo("Success", f"File signed successfully!
+Signature saved at: {signature_path}")
         except Exception as e:
-            logging.error("Error signing file: %s", str(e))
-            messagebox.showerror("Error", f"Error signing file: {str(e)}")
+            messagebox.showerror("Error", str(e))
 
     def verify_signature(self):
-        logging.info("Signature verification initiated.")
-        messagebox.showinfo("Signature Verification", "Signature verification functionality to be implemented.")
+        file_path = filedialog.askopenfilename(title="Select File to Verify")
+        if not file_path:
+            return
+
+        signature_path = filedialog.askopenfilename(title="Select Signature File")
+        if not signature_path:
+            return
+
+        try:
+            is_valid = lamport.verify_signature(file_path, signature_path)
+            if is_valid:
+                messagebox.showinfo("Verification Successful", "The signature is valid.")
+            else:
+                messagebox.showwarning("Verification Failed", "The signature is invalid.")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
 if __name__ == "__main__":
     app = LamportApp()
