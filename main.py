@@ -2,10 +2,14 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
 import logging
+from lamport import generate_keys
 
 # Set up logging
 logging.basicConfig(filename='logs/app.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
+
+KEY_DIR = 'keys/'
+os.makedirs(KEY_DIR, exist_ok=True)
 
 # Main Application Class
 class LamportApp(tk.Tk):
@@ -55,8 +59,13 @@ class LamportApp(tk.Tk):
         self.verify_button.pack(pady=10)
 
     def generate_keys(self):
-        logging.info("Key generation initiated.")
-        messagebox.showinfo("Key Generation", "Key generation functionality to be implemented.")
+        try:
+            private_key_path, public_key_path = generate_keys()
+            messagebox.showinfo("Success", f"Keys generated successfully!\nPrivate Key: {private_key_path}\nPublic Key: {public_key_path}")
+
+        except Exception as e:
+            logging.error("Error generating keys: %s", str(e))
+            messagebox.showerror("Error", f"Error generating keys: {str(e)}")
 
     def sign_file(self):
         logging.info("File signing initiated.")
@@ -69,4 +78,3 @@ class LamportApp(tk.Tk):
 if __name__ == "__main__":
     app = LamportApp()
     app.mainloop()
-
