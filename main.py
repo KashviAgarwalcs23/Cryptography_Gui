@@ -71,8 +71,7 @@ class LamportApp(tk.Tk):
             return
         try:
             signature_path = lamport.sign_file(file_path)
-            messagebox.showinfo("Success", f"File signed successfully!
-Signature saved at: {signature_path}")
+            messagebox.showinfo("Success", f"File signed successfully!Signature saved at: {signature_path}")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
