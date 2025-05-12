@@ -42,4 +42,38 @@ def generate_keys():
     except Exception as e:
         logging.error("Error generating keys: %s", str(e))
         raise
+def sign_file(file_path):
+    try:
+        logging.info("File signing initiated for %s", file_path)
+        private_key_path = os.path.join(KEY_DIR, "private_key.bin")
+
+        if not os.path.exists(private_key_path):
+            raise FileNotFoundError("Private key not found. Generate keys first.")
+
+        # Read the private key
+        with open(private_key_path, 'rb') as pk_file:
+            private_key = [pk_file.read(32 * 256), pk_file.read(32 * 256)]
+
+        # Hash the file content
+        with open(file_path, 'rb') as file:
+            file_content = file.read()
+            file_hash = hashlib.sha256(file_content).hexdigest()
+
+        # Sign the file
+        signature = b""
+        for i, char in enumerate(file_hash):
+            index = int(char, 16)
+            signature += private_key[index // 16][index % 16]
+
+        # Save the signature
+        signature_path = os.path.join(KEY_DIR, "signature.bin")
+        with open(signature_path, 'wb') as sig_file:
+            sig_file.write(signature)
+
+        logging.info("File signed successfully. Signature saved at %s", signature_path)
+        return signature_path
+
+    except Exception as e:
+        logging.error("Error signing file: %s", str(e))
+        raise
 
