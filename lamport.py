@@ -46,72 +46,61 @@ def generate_keys():
 
 def sign_file(file_path):
     try:
-        logging.info("File signing initiated for %s", file_path)
-        private_key_path = os.path.join(KEY_DIR, "private_key.bin")
+        with open('keys/private_key.bin', 'rb') as pk_file:
+            private_key = [pk_file.read(32) for _ in range(512)]
 
-        if not os.path.exists(private_key_path):
-            raise FileNotFoundError("Private key not found. Generate keys first.")
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+            hashed_data = hashlib.sha256(file_data).digest()
 
-        # Read the private key
-        with open(private_key_path, 'rb') as pk_file:
-            private_key = [pk_file.read(32 * 256), pk_file.read(32 * 256)]
+        signature = []
+        for i in range(256):
+            bit = (hashed_data[i // 8] >> (7 - (i % 8))) & 1
+            signature.append(private_key[bit * 256 + i])
 
-        # Hash the file content
-        with open(file_path, 'rb') as file:
-            file_content = file.read()
-            file_hash = hashlib.sha256(file_content).hexdigest()
-
-        # Sign the file
-        signature = b""
-        for i, char in enumerate(file_hash):
-            index = int(char, 16)
-            signature += private_key[index // 16][index % 16]
-
-        # Save the signature
-        signature_path = os.path.join(KEY_DIR, "signature.bin")
+        signature_path = os.path.join('keys', 'signature.bin')
         with open(signature_path, 'wb') as sig_file:
-            sig_file.write(signature)
+            for chunk in signature:
+                sig_file.write(chunk)
 
-        logging.info("File signed successfully. Signature saved at %s", signature_path)
+        logging.info(f"File signed successfully. Signature saved at {signature_path}")
         return signature_path
 
     except Exception as e:
-        logging.error("Error signing file: %s", str(e))
-        raise
-
+        logging.error(f"Error signing file: {str(e)}")
+        raise e
+    
 
 def verify_signature(file_path, signature_path):
     try:
-        logging.info("Signature verification initiated for %s", file_path)
-        public_key_path = os.path.join(KEY_DIR, "public_key.bin")
+        # Load the public key
+        with open('keys/public_key.bin', 'rb') as pub_file:
+            public_key = [pub_file.read(32) for _ in range(512)]
 
-        if not os.path.exists(public_key_path):
-            raise FileNotFoundError("Public key not found. Generate keys first.")
-
-        # Read the public key
-        with open(public_key_path, 'rb') as pub_file:
-            public_key = [pub_file.read(32 * 256), pub_file.read(32 * 256)]
+        # Read and hash the file data
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+            hashed_data = hashlib.sha256(file_data).digest()
 
         # Read the signature
         with open(signature_path, 'rb') as sig_file:
-            signature = sig_file.read()
+            signature = [sig_file.read(32) for _ in range(256)]
 
-        # Hash the file content
-        with open(file_path, 'rb') as file:
-            file_content = file.read()
-            file_hash = hashlib.sha256(file_content).hexdigest()
+        # Verification process
+        for i in range(256):
+            bit = (hashed_data[i // 8] >> (7 - (i % 8))) & 1
+            public_hash = hashlib.sha256(signature[i]).digest()
 
-        # Verify the signature
-        for i, char in enumerate(file_hash):
-            index = int(char, 16)
-            expected_hash = hashlib.sha256(signature[i * 32:(i + 1) * 32]).digest()
-            if expected_hash != public_key[index // 16][index % 16]:
-                logging.warning("Signature verification failed.")
+            # Debugging: Print the bit, hash, and the corresponding public key entry
+            logging.info(f"Bit: {bit}, Public Hash: {public_hash.hex()}, Expected Public Key: {public_key[bit * 256 + i].hex()}")
+
+            if public_hash != public_key[bit * 256 + i]:
+                logging.warning(f"Signature verification failed at index {i}.")
                 return False
 
-        logging.info("Signature verified successfully.")
+        logging.info("Signature verification successful.")
         return True
 
     except Exception as e:
-        logging.error("Error verifying signature: %s", str(e))
-        raise
+        logging.error(f"Error verifying signature: {str(e)}")
+        raise e
