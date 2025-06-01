@@ -127,3 +127,17 @@ We demonstrate the insecurity of Lamport One-Time Signatures when the same priva
 
 > This confirms that **reusing a Lamport key even once breaks its security guarantee**.
 
+## 🧨 Attack Demonstration Using CyberChef
+
+Using CyberChef, we simulated a cryptographic vulnerability in Lamport One-Time Signatures:
+
+- We hashed two distinct messages (`Attack at dawn` and `Retreat at dusk`) using SHA-256.
+- Their binary hashes were compared bit-by-bit.
+- At several positions, one message had bit `0` and the other had bit `1`.
+
+This means both halves of the private key (`private_key[i][0]` and `private_key[i][1]`) are revealed for those bit positions.
+
+If an attacker sees these two signed messages, they can forge a valid signature for any third message that matches those bit values — breaking the integrity of the signature scheme.
+
+This proves that **reusing a Lamport key even once is insecure**.
+
