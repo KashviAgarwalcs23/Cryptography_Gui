@@ -111,3 +111,19 @@ Post-Quantum Cryptography (NIST)
 
 Let me know if you'd like to add screenshots or GIFs of the GUI, or if you want the README tailored for a more academic or professional audience.
 
+
+## 🔓 Attack Demonstration Using CyberChef
+
+We demonstrate the insecurity of Lamport One-Time Signatures when the same private key is used more than once.
+
+### Tools Used
+- [CyberChef](https://gchq.github.io/CyberChef/) – for hashing and binary analysis
+
+### Steps
+1. Signed two messages using the same key
+2. Used CyberChef to compute their SHA-256 hashes and convert to binary
+3. Compared the bit patterns to identify positions where both 0 and 1 bits were revealed
+4. Showed that enough information is leaked to allow forging a signature for a new message
+
+> This confirms that **reusing a Lamport key even once breaks its security guarantee**.
+
